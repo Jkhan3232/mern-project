@@ -7,14 +7,17 @@ const hbs = require("hbs");
 require("./db/conect");
 const JKWorld = require("./models/schema");
 const bcrypt = require("bcrypt");
-
+const cookie = require("cookie-parser");
+const auth = require("./middlewere/auth");
 const async = require("hbs/lib/async");
+const { status } = require("express/lib/response");
 
 const htmlPath = path.join(__dirname, "../public");
 const view_Path = path.join(__dirname, "../template/views");
 const paritals = path.join(__dirname, "../template/partials");
 
 app.use(express.json());
+app.use(cookie());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(htmlPath));
 app.set("view engine", "hbs");
@@ -29,6 +32,28 @@ app.get("/", (req, res) => {
 
 app.get("/register", (req, res) => {
   res.render("register");
+});
+
+app.get("/secrate", auth, (req, res) => {
+  // console.log(`crate our cookie ${req.cookies.jwt}`);
+  res.render("secrate");
+});
+
+app.get("/logout", auth, async (req, res) => {
+  try {
+    // req.user.tokens = req.user.tokens.filter((currntElm) => {
+    //   return currntElm.token !== req.token;
+    // });
+
+    req.user.tokens = [];
+
+    res.clearCookie("jwt");
+    console.log("logot successfully..");
+    await req.user.save();
+    res.render("login");
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 
 app.get("/login", (req, res) => {
@@ -52,15 +77,20 @@ app.post("/register", async (req, res) => {
         confirmpassword: cpassword,
       });
 
-      console.log("the jwt part" + Jkreisgter);
+      // console.log("the jwt part" + Jkreisgter);
       const token = await Jkreisgter.genrateAuthToken();
-      console.log("The token part" + token);
+      // console.log("The token part" + token);
+
+      res.cookie("jwt", token, {
+        expires: new Date(Date.now() + 100000),
+        httpOnly: true,
+      });
 
       const registerjk = await Jkreisgter.save();
-      console.log("passing page" + registerjk);
+      // console.log("passing page" + registerjk);
 
       res.status(200).render("index");
-      console.log(registerjk);
+      // console.log(registerjk);
     } else {
       res.send("Password is not match");
     }
@@ -79,7 +109,12 @@ app.post("/login", async (req, res) => {
     const isMail = await bcrypt.compare(password, usremail.password);
 
     const token = await usremail.genrateAuthToken();
-    console.log("The token part" + token);
+    // console.log("The token part" + token);
+
+    res.cookie("jwt", token, {
+      expires: new Date(Date.now() + 100000),
+      httpOnly: true,
+    });
 
     if (isMail) {
       res.status(201).render("index");
