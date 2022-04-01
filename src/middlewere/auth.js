@@ -11,10 +11,12 @@ const auth = async (req, res, next) => {
     console.log(verifyUser);
 
     const user = await JKWorld.findOne({ _id: verifyUser });
+
     console.log(user.firstname);
 
     req.token = token;
     req.user = user;
+
     next();
   } catch {
     res.status(401).send("this not velid user");

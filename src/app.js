@@ -48,7 +48,7 @@ app.get("/logout", auth, async (req, res) => {
     req.user.tokens = [];
 
     res.clearCookie("jwt");
-    console.log("logot successfully..");
+    console.log("logout successfully..");
     await req.user.save();
     res.render("login");
   } catch (err) {
@@ -118,6 +118,7 @@ app.post("/login", async (req, res) => {
 
     if (isMail) {
       res.status(201).render("index");
+      console.log("Login succsecfully");
     } else {
       res.send("passwor is not match");
     }
